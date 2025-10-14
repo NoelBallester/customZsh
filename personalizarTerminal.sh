@@ -22,7 +22,7 @@ preguntar() {
 # Verificar si zsh está instalado
 if ! command -v zsh &>/dev/null; then
     echo -e "${YELLOW}Zsh no está instalado. Instalando...${NC}"
-    sudo apt update && && sudo apt upgrade && sudo apt instal build-essential && sudo apt install -y zsh
+    sudo apt update && sudo apt upgrade && sudo apt instal build-essential && sudo apt install -y zsh
 else
     echo -e "${GREEN}Zsh ya está instalado.${NC}"
 fi
@@ -152,11 +152,10 @@ if preguntar "¿Quieres instalar Neovim (última versión) junto con NvChad?"; t
     fi
 
     echo -e "${GREEN}Instalando NvChad...${NC}"
+    rm -rf "$HOME/.config/nvim"
     git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
     if [[ ! -f "$HOME/.config/nvim/init.lua" ]]; then
         echo -e "${YELLOW}NvChad no se clonó correctamente. Reintentando...${NC}"
-        rm -rf "$HOME/.config/nvim"
-        git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
     fi
     echo "NvChad instalado en ~/.config/nvim" >> "$LOG"
     echo -e "${GREEN}NvChad listo. Ejecuta 'nvim' para finalizar la instalación interactiva.${NC}"
