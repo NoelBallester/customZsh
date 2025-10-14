@@ -22,7 +22,7 @@ preguntar() {
 # Verificar si zsh está instalado
 if ! command -v zsh &>/dev/null; then
     echo -e "${YELLOW}Zsh no está instalado. Instalando...${NC}"
-    sudo apt update && sudo apt upgrade && sudo apt instal build-essential && sudo apt install -y zsh
+    sudo apt update && sudo apt upgrade -y && sudo apt install -y build-essential && sudo apt install -y zsh
 else
     echo -e "${GREEN}Zsh ya está instalado.${NC}"
 fi
