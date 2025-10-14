@@ -194,7 +194,8 @@ fi
     echo "alias ls='lsd --group-dirs=first'"
   fi
 } >> "$ZSHRC"
-
+rm -rf $HOME/.config/nvim
+git clone https://github.com/NvChad/starter ~/.config/nvim
 # Mensaje final
 echo -e "${GREEN}✅ Instalación completada. Reinicia la terminal o ejecuta:${NC}"
 echo -e "${GREEN}source ~/.zshrc${NC}"
