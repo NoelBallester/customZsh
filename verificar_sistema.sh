@@ -105,6 +105,51 @@ if [[ "$MODE" == "detallado" ]]; then
     echo ""
 fi
 
+# Comprobaciones específicas para fzf
+echo -e "${CYAN}\u2550\u2550\u2550 Comprobaci\u00f3n específica: fzf \u2550\u2550\u2550${NC}"
+
+# ¿Está el paquete fzf en los repositorios APT?
+if apt-cache show fzf 2>/dev/null | grep -q "Package: fzf"; then
+    echo -e "${GREEN}\u2713${NC} paquete 'fzf' disponible en repositorios APT"
+else
+    echo -e "${YELLOW}\u26a0${NC} paquete 'fzf' no encontrado en repositorios APT"
+fi
+
+# ¿Existen los ejemplos/keybindings instalados por el paquete?
+if [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]; then
+    echo -e "${GREEN}\u2713${NC} '/usr/share/doc/fzf/examples/key-bindings.zsh' encontrado"
+else
+    echo -e "${YELLOW}\u26a0${NC} '/usr/share/doc/fzf/examples/key-bindings.zsh' no encontrado"
+fi
+
+# ¿Existe la instalación local de fzf (~/.fzf) con su fichero .fzf.zsh?
+if [ -f "$HOME/.fzf.zsh" ]; then
+    echo -e "${GREEN}\u2713${NC} '$HOME/.fzf.zsh' encontrado (instalaci\u00f3n local de fzf)"
+elif [ -d "$HOME/.fzf" ]; then
+    echo -e "${GREEN}\u2713${NC} '$HOME/.fzf' encontrado (instalaci\u00f3n local de fzf)"
+else
+    echo -e "${YELLOW}\u26a0${NC} fzf no instalado localmente en '~/.fzf' ni se encontró '~/.fzf.zsh'"
+fi
+
+# Comprobar que el instalador 'personalizarTerminal.sh' contiene la configuraci\u00f3n para fzf (Ctrl+r)
+if [[ -f "personalizarTerminal.sh" ]]; then
+    if grep -q "# FZF: ctrl-r" personalizarTerminal.sh || grep -q "FZF_CTRL_R_OPTS" personalizarTerminal.sh; then
+        echo -e "${GREEN}\u2713${NC} 'personalizarTerminal.sh' contiene bloque de configuraci\u00f3n para fzf (Ctrl+r)"
+    else
+        echo -e "${RED}\u2717${NC} 'personalizarTerminal.sh' NO contiene la configuraci\u00f3n para fzf (Ctrl+r)"
+        echo -e "  ${YELLOW}Recomendaci\u00f3n:${NC} Añadir el bloque de fzf al instalador para habilitar Ctrl+r con vista previa"
+    fi
+else
+    echo -e "${YELLOW}\u26a0${NC} 'personalizarTerminal.sh' no encontrado en el directorio actual"
+fi
+
+# Probar una comprobaci\u00f3n ligera: si el documento de key-bindings existe, indicar que la carga en .zshrc funcionar\u00e1 normalmente
+if [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] || [ -f "$HOME/.fzf.zsh" ]; then
+    echo -e "${GREEN}\u2713${NC} Si el instalador carga los keybindings desde uno de estos ficheros, Ctrl+r funcionar\u00e1 correctamente tras reiniciar la sesi\u00f3n Zsh"
+else
+    echo -e "${YELLOW}\u26a0${NC} Si fzf se instala desde GitHub (\$HOME/.fzf), el instalador debe ejecutar '$HOME/.fzf/install' para generar el archivo de keybindings"
+fi
+
 # Determinar configuración recomendada según sistema
 echo -e "${CYAN}═══ Configuración Recomendada ═══${NC}"
 

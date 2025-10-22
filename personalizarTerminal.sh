@@ -297,29 +297,34 @@ fi
     if preguntar "¿Quieres activar búsqueda del historial con fzf (Ctrl+r) con vista previa?"; then
         usar_fzf_hist=true
 
-        # Instalar fzf si no está disponible
+        # Intentar instalar fzf vía APT si está disponible, si falla instalar localmente en ~/.fzf
         if ! command -v fzf &>/dev/null; then
             echo -e "${YELLOW}Instalando fzf...${NC}"
-            if sudo apt-get update -y && sudo apt-get install -y fzf; then
+            if sudo apt-get update -y >/dev/null 2>&1 && sudo apt-get install -y fzf >/dev/null 2>&1; then
                 echo "fzf instalado desde APT" >> "$LOG"
             else
-                echo -e "${YELLOW}APT falló o no disponible. Instalando fzf desde GitHub (local en $HOME/.fzf)...${NC}"
+                echo -e "${YELLOW}Instalación APT fallida o no disponible. Instalando fzf desde GitHub en ~/.fzf...${NC}"
                 if [[ ! -d "$HOME/.fzf" ]]; then
-                    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+                    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf" >> "$LOG" 2>&1 || true
                 fi
-                yes | "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish --zsh || true
+                # Ejecutar instalador no interactivo para generar keybindings zsh/completion
+                if [[ -f "$HOME/.fzf/install" ]]; then
+                    yes | "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish --zsh >> "$LOG" 2>&1 || true
+                fi
             fi
+        else
+            echo -e "${GREEN}fzf ya está instalado en el sistema.${NC}"
         fi
 
         # Construir comando de previsualización (con bat si está)
         PREVIEW_CMD='print -r -- {}'
         if command -v bat &>/dev/null; then
-            PREVIEW_CMD="echo {} | bat -l bash -p --color=always"
+            PREVIEW_CMD="bat --paging=never --style=numbers --color=always {}"
         elif command -v batcat &>/dev/null; then
-            PREVIEW_CMD="echo {} | batcat -l bash -p --color=always"
+            PREVIEW_CMD="batcat --paging=never --style=numbers --color=always {}"
         fi
 
-        # Añadir configuración a .zshrc si no existe
+        # Añadir configuración a .zshrc de forma idempotente
         if ! grep -q "# FZF: ctrl-r" "$ZSHRC"; then
             {
                 echo ""
@@ -341,6 +346,8 @@ fi
                 echo "fi"
             } >> "$ZSHRC"
             echo "FZF (Ctrl+r) configurado en $ZSHRC" >> "$LOG"
+        else
+            echo -e "${YELLOW}Bloque FZF ya presente en $ZSHRC — omitiendo duplicado${NC}"
         fi
 
         # Mejorar el historial de Zsh (tamaño grande y opciones útiles)
@@ -353,6 +360,14 @@ fi
                 echo "export SAVEHIST=200000"
                 echo "setopt HIST_IGNORE_DUPS SHARE_HISTORY INC_APPEND_HISTORY EXTENDED_HISTORY HIST_FIND_NO_DUPS HIST_IGNORE_SPACE"
             } >> "$ZSHRC"
+        fi
+
+        # Si fzf no generó ~/.fzf.zsh pero existe la instalación local, crear un pequeño wrapper para sourcearlo
+        if [[ -d "$HOME/.fzf" && ! -f "$HOME/.fzf.zsh" ]]; then
+            # Ejecutar instalador para generar el archivo zsh si es posible
+            if [[ -f "$HOME/.fzf/install" ]]; then
+                yes | "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish --zsh >> "$LOG" 2>&1 || true
+            fi
         fi
     fi
 
