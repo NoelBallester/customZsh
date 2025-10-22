@@ -264,11 +264,33 @@ if preguntar "¿Quieres instalar Neovim (última versión) junto con NvChad?"; t
         mv "$HOME/.config/nvim" "$HOME/.config/nvim.backup.$(date +%s)"
     fi
 
-    echo -e "${GREEN}Instalando NvChad starter template...${NC}"
-    git clone https://github.com/NvChad/starter ~/.config/nvim --depth 1
-    rm -rf ~/.config/nvim/.git
-    echo "NvChad starter instalado en ~/.config/nvim" >> "$LOG"
-    echo -e "${GREEN}NvChad listo. Ejecuta 'nvim' para finalizar la instalación interactiva.${NC}"
+        echo -e "${GREEN}Instalando NvChad starter template...${NC}"
+        git clone https://github.com/NvChad/starter ~/.config/nvim --depth 1
+        rm -rf ~/.config/nvim/.git
+        echo "NvChad starter instalado en ~/.config/nvim" >> "$LOG"
+
+        # Asegurar dependencias útiles de entorno (no críticas)
+        if ! command -v rg &>/dev/null; then
+            echo -e "${YELLOW}Instalando ripgrep (mejora la búsqueda en Telescope)...${NC}"
+            sudo apt-get update -y >/dev/null 2>&1 || true
+            sudo apt-get install -y ripgrep >/dev/null 2>&1 || true
+        fi
+
+        echo -e "${GREEN}Sincronizando plugins de NvChad (headless)...${NC}"
+        # Instalar/actualizar plugins y esperar a que termine
+        if ! nvim --headless \
+                "+lua require('lazy').sync({ wait = true, show = false })" \
+                "+qa"; then
+            echo -e "${YELLOW}Reintentando sincronización de plugins...${NC}"
+            nvim --headless "+Lazy! sync" +qa || true
+        fi
+
+        # Compilar/crear cachés de base46 para evitar errores en el primer arranque
+        nvim --headless \
+            "+lua do local ok, b = pcall(require, 'base46'); if ok and b.load_all_highlights then b.load_all_highlights() end end" \
+            "+qa" || true
+
+        echo -e "${GREEN}NvChad listo. Puedes ejecutar 'nvim' ahora mismo.${NC}"
 fi
 
 # Añadir configuración a .zshrc sin sobrescribir
