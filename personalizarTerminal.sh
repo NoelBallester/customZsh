@@ -2,6 +2,14 @@
 
 set -euo pipefail
 
+# Verificar que no se ejecute como root
+if [[ $EUID -eq 0 ]]; then
+    echo "❌ ERROR: No ejecutes este script como root (sudo)"
+    echo "   El script instalará las configuraciones en el directorio del usuario actual"
+    echo "   Ejecuta: bash personalizarTerminal.sh (sin sudo)"
+    exit 1
+fi
+
 # Colores
 GREEN="\033[0;32m"
 YELLOW="\033[1;33m"
@@ -144,9 +152,15 @@ if preguntar "¿Quieres usar lsd como reemplazo de ls?"; then
             else
                 echo -e "${YELLOW}Snap no disponible. Descargando lsd desde GitHub...${NC}"
                 LSD_VERSION="1.1.5"
-                wget -q "https://github.com/lsd-rs/lsd/releases/download/v${LSD_VERSION}/lsd_${LSD_VERSION}_amd64.deb" -O /tmp/lsd.deb
-                sudo dpkg -i /tmp/lsd.deb || sudo apt-get install -f -y
-                rm -f /tmp/lsd.deb
+                TEMP_LSD_FILE="/tmp/lsd_${USER}_$$.deb"
+                
+                if wget -q "https://github.com/lsd-rs/lsd/releases/download/v${LSD_VERSION}/lsd_${LSD_VERSION}_amd64.deb" -O "$TEMP_LSD_FILE"; then
+                    sudo dpkg -i "$TEMP_LSD_FILE" || sudo apt-get install -f -y
+                    rm -f "$TEMP_LSD_FILE"
+                else
+                    echo -e "${RED}Error al descargar lsd${NC}"
+                    rm -f "$TEMP_LSD_FILE"
+                fi
             fi
         fi
     fi
@@ -155,10 +169,25 @@ if preguntar "¿Quieres usar lsd como reemplazo de ls?"; then
     if ! fc-list | grep -qi "Hack Nerd Font"; then
         echo -e "${GREEN}Instalando Hack Nerd Fonts para compatibilidad con íconos...${NC}"
         mkdir -p "$HOME/.local/share/fonts"
-        wget -qO /tmp/Hack.zip https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hack.zip
-        unzip -o /tmp/Hack.zip -d "$HOME/.local/share/fonts/"
-        fc-cache -fv
-        echo "Hack Nerd Font instalada" >> "$LOG"
+        
+        # Usar directorio temporal único para evitar conflictos
+        TEMP_FONT_FILE="/tmp/Hack_${USER}_$$.zip"
+        
+        # Descargar fuente
+        if wget -qO "$TEMP_FONT_FILE" https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hack.zip; then
+            # Descomprimir
+            if unzip -o "$TEMP_FONT_FILE" -d "$HOME/.local/share/fonts/"; then
+                fc-cache -fv
+                echo "Hack Nerd Font instalada" >> "$LOG"
+            else
+                echo -e "${RED}Error al descomprimir la fuente${NC}"
+            fi
+            # Limpiar archivo temporal
+            rm -f "$TEMP_FONT_FILE"
+        else
+            echo -e "${RED}Error al descargar Hack Nerd Font${NC}"
+            rm -f "$TEMP_FONT_FILE"
+        fi
     fi
 fi
 

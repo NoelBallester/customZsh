@@ -156,6 +156,8 @@ Esto mostrará información adicional como:
 bash personalizarTerminal.sh
 ```
 
+> ⚠️ **IMPORTANTE:** **NO** ejecutes el script con `sudo`. El script instalará las configuraciones en el directorio del usuario actual (`$HOME`). Si lo ejecutas como root, las configuraciones se instalarán en `/root` en lugar de tu usuario.
+
 El script te guiará paso a paso con preguntas interactivas:
 
 #### Ejemplo de ejecución:
@@ -398,6 +400,24 @@ fi
 
 ## 🔧 Solución de Problemas
 
+### ❌ Error: "No ejecutes este script como root"
+
+**Causa:** El script fue ejecutado con `sudo` o como usuario root
+
+**Problema:** Si ejecutas el script como root, todas las configuraciones se instalarán en `/root` en lugar de tu directorio de usuario (`$HOME`), y no tendrás acceso a ellas desde tu usuario normal.
+
+**Solución:**
+
+```bash
+# ❌ INCORRECTO
+sudo bash personalizarTerminal.sh
+
+# ✅ CORRECTO
+bash personalizarTerminal.sh
+```
+
+**Nota:** El script pedirá la contraseña de `sudo` cuando sea necesario para instalar paquetes del sistema, pero la ejecución inicial debe ser como usuario normal.
+
 ### ❌ Error: "lsd: command not found" (Ubuntu 22.04 / Debian 11)
 
 **Causa:** `lsd` no está disponible en repositorios oficiales
@@ -620,6 +640,13 @@ bash personalizarTerminal.sh
 ---
 
 ## 📝 Changelog
+
+### v2.1 (22 Octubre 2025)
+
+- 🛡️ **Validación de ejecución como root:** El script ahora previene ejecución con `sudo`
+- 🔧 **Mejora en archivos temporales:** Uso de archivos temporales únicos para evitar conflictos
+- 📦 **Mejor manejo de errores:** Limpieza automática de archivos temporales en caso de fallo
+- 📝 **Documentación mejorada:** README.md completamente reescrito con guías detalladas
 
 ### v2.0 (22 Octubre 2025)
 
