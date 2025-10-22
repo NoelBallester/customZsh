@@ -2,12 +2,19 @@
 
 set -euo pipefail
 
-# Verificar que no se ejecute como root
+# Detectar si se ejecuta como root y avisar al usuario
 if [[ $EUID -eq 0 ]]; then
-    echo "❌ ERROR: No ejecutes este script como root (sudo)"
-    echo "   El script instalará las configuraciones en el directorio del usuario actual"
-    echo "   Ejecuta: bash personalizarTerminal.sh (sin sudo)"
-    exit 1
+    echo -e "\033[1;33m⚠️  ADVERTENCIA: Estás ejecutando este script como root\033[0m"
+    echo ""
+    echo "   Las configuraciones se instalarán en: /root"
+    echo "   Si quieres configurar tu usuario normal, ejecuta sin sudo"
+    echo ""
+    read -rp "¿Deseas continuar e instalar para el usuario root? [s/N]: " confirm_root
+    if [[ ! "$confirm_root" =~ ^[sS]$ ]]; then
+        echo "Instalación cancelada."
+        exit 0
+    fi
+    echo ""
 fi
 
 # Colores

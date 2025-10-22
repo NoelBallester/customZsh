@@ -156,7 +156,10 @@ Esto mostrará información adicional como:
 bash personalizarTerminal.sh
 ```
 
-> ⚠️ **IMPORTANTE:** **NO** ejecutes el script con `sudo`. El script instalará las configuraciones en el directorio del usuario actual (`$HOME`). Si lo ejecutas como root, las configuraciones se instalarán en `/root` en lugar de tu usuario.
+> ℹ️ **Nota sobre ejecución como root:**
+> - **Usuario normal:** Configura el entorno en tu directorio `$HOME` (recomendado)
+> - **Como root (`sudo`):** El script te preguntará si deseas instalar para el usuario root en `/root`
+> - El script funciona en ambos casos, pero la mayoría de usuarios querrán ejecutarlo sin `sudo`
 
 El script te guiará paso a paso con preguntas interactivas:
 
@@ -400,23 +403,28 @@ fi
 
 ## 🔧 Solución de Problemas
 
-### ❌ Error: "No ejecutes este script como root"
+### ℹ️ Ejecución como root vs usuario normal
 
-**Causa:** El script fue ejecutado con `sudo` o como usuario root
+**El script funciona tanto para root como para usuarios normales**, pero es importante entender las diferencias:
 
-**Problema:** Si ejecutas el script como root, todas las configuraciones se instalarán en `/root` en lugar de tu directorio de usuario (`$HOME`), y no tendrás acceso a ellas desde tu usuario normal.
-
-**Solución:**
-
+**Como usuario normal (recomendado):**
 ```bash
-# ❌ INCORRECTO
-sudo bash personalizarTerminal.sh
-
-# ✅ CORRECTO
 bash personalizarTerminal.sh
 ```
+- ✅ Configura tu entorno en `$HOME` (ej: `/home/usuario`)
+- ✅ El script pedirá `sudo` solo cuando sea necesario para paquetes del sistema
+- ✅ Ideal para uso diario
 
-**Nota:** El script pedirá la contraseña de `sudo` cuando sea necesario para instalar paquetes del sistema, pero la ejecución inicial debe ser como usuario normal.
+**Como root:**
+```bash
+sudo bash personalizarTerminal.sh
+# El script te preguntará si deseas continuar
+```
+- ⚠️ Configura el entorno en `/root`
+- ⚠️ Útil si quieres personalizar la terminal de root
+- ⚠️ No afecta a tu usuario normal
+
+**Consejo:** Si quieres personalizar tanto tu usuario como root, ejecuta el script dos veces: una vez normalmente y otra con `sudo`.
 
 ### ❌ Error: "lsd: command not found" (Ubuntu 22.04 / Debian 11)
 
@@ -643,7 +651,8 @@ bash personalizarTerminal.sh
 
 ### v2.1 (22 Octubre 2025)
 
-- 🛡️ **Validación de ejecución como root:** El script ahora previene ejecución con `sudo`
+- � **Soporte para ejecución como root:** El script ahora funciona tanto para usuarios normales como root
+- 💬 **Confirmación interactiva:** Al ejecutar como root, solicita confirmación antes de instalar
 - 🔧 **Mejora en archivos temporales:** Uso de archivos temporales únicos para evitar conflictos
 - 📦 **Mejor manejo de errores:** Limpieza automática de archivos temporales en caso de fallo
 - 📝 **Documentación mejorada:** README.md completamente reescrito con guías detalladas
