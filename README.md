@@ -27,6 +27,8 @@ Este script permite:
 
 - **Ubuntu 24.04 LTS** (recomendado - soporte completo)
 - **Ubuntu 22.04 LTS** (compatible con adaptaciones automáticas)
+- **Debian 12 (Bookworm)** (compatible - equivalente a Ubuntu 24.04)
+- **Debian 11 (Bullseye)** (compatible con adaptaciones automáticas)
 
 ### � Adaptaciones automáticas para Ubuntu 22.04
 
@@ -70,6 +72,8 @@ Este script verifica:
 ### 📄 Documentación adicional
 
 - **`COMPATIBILIDAD.md`**: Análisis detallado de diferencias entre Ubuntu 24.04 y 22.04
+- **`COMPATIBILIDAD_DEBIAN.md`**: Guía completa de compatibilidad con Debian
+- **`RESUMEN_CORRECCIONES.md`**: Historial de correcciones aplicadas
 - **`test_compatibilidad.sh`**: Script de verificación rápida del sistema
 - **`verificar_compatibilidad.sh`**: Diagnóstico completo de compatibilidad
 

@@ -14,16 +14,34 @@ ZSH_CUSTOM="${ZSH_CUSTOM:-$ZSH/custom}"
 ZSHRC="$HOME/.zshrc"
 LOG="$HOME/.zsh_installer.log"
 
-# Detectar versión de Ubuntu
-UBUNTU_VERSION=""
+# Detectar versión de Ubuntu/Debian
+DISTRO_ID=""
+DISTRO_VERSION=""
+DISTRO_NAME=""
+
 if [[ -f /etc/os-release ]]; then
     . /etc/os-release
-    UBUNTU_VERSION="$VERSION_ID"
-    echo -e "${BLUE}Sistema detectado: $PRETTY_NAME${NC}"
+    DISTRO_ID="$ID"
+    DISTRO_VERSION="$VERSION_ID"
+    DISTRO_NAME="$PRETTY_NAME"
+    echo -e "${BLUE}Sistema detectado: $DISTRO_NAME${NC}"
+    
+    # Validar que sea Ubuntu o Debian
+    if [[ "$DISTRO_ID" != "ubuntu" && "$DISTRO_ID" != "debian" ]]; then
+        echo -e "${RED}⚠️  Este script está diseñado para Ubuntu y Debian.${NC}"
+        echo -e "${YELLOW}Distribución detectada: $DISTRO_ID${NC}"
+        if ! preguntar "¿Deseas continuar de todos modos?"; then
+            exit 1
+        fi
+    fi
 else
-    echo -e "${RED}No se pudo detectar la versión de Ubuntu${NC}"
-    UBUNTU_VERSION="unknown"
+    echo -e "${RED}No se pudo detectar la versión del sistema${NC}"
+    DISTRO_ID="unknown"
+    DISTRO_VERSION="unknown"
 fi
+
+# Mantener compatibilidad con variable antigua
+UBUNTU_VERSION="$DISTRO_VERSION"
 
 # Función para preguntar al usuario (sí/no)
 preguntar() {
@@ -110,11 +128,16 @@ usar_lsd=false
 if preguntar "¿Quieres usar lsd como reemplazo de ls?"; then
     usar_lsd=true
     if ! command -v lsd &>/dev/null; then
-        if [[ "$UBUNTU_VERSION" == "24.04" ]] || [[ "$(printf '%s\n' "$UBUNTU_VERSION" "24.04" | sort -V | head -n1)" == "24.04" && "$UBUNTU_VERSION" != "24.04" ]]; then
+        # Ubuntu 24.04+ tiene lsd en repos
+        if [[ "$DISTRO_ID" == "ubuntu" && ("$DISTRO_VERSION" == "24.04" || "$(printf '%s\n' "$DISTRO_VERSION" "24.04" | sort -V | head -n1)" == "24.04") ]]; then
             echo -e "${GREEN}Instalando lsd desde repositorios oficiales...${NC}"
             sudo apt install -y lsd
+        # Debian 12+ (Bookworm) tiene lsd en repos
+        elif [[ "$DISTRO_ID" == "debian" && ("$DISTRO_VERSION" == "12" || "$DISTRO_VERSION" -ge "12") ]]; then
+            echo -e "${GREEN}Instalando lsd desde repositorios oficiales de Debian...${NC}"
+            sudo apt install -y lsd
         else
-            echo -e "${YELLOW}Ubuntu $UBUNTU_VERSION detectado. lsd no está en repositorios oficiales.${NC}"
+            echo -e "${YELLOW}$DISTRO_NAME detectado. lsd no está en repositorios oficiales.${NC}"
             if command -v snap &>/dev/null; then
                 echo -e "${GREEN}Instalando lsd desde Snap...${NC}"
                 sudo snap install lsd
@@ -122,8 +145,8 @@ if preguntar "¿Quieres usar lsd como reemplazo de ls?"; then
                 echo -e "${YELLOW}Snap no disponible. Descargando lsd desde GitHub...${NC}"
                 LSD_VERSION="1.1.5"
                 wget -q "https://github.com/lsd-rs/lsd/releases/download/v${LSD_VERSION}/lsd_${LSD_VERSION}_amd64.deb" -O /tmp/lsd.deb
-                sudo dpkg -i /tmp/lsd.deb
-                rm /tmp/lsd.deb
+                sudo dpkg -i /tmp/lsd.deb || sudo apt-get install -f -y
+                rm -f /tmp/lsd.deb
             fi
         fi
     fi
@@ -143,13 +166,16 @@ fi
 if preguntar "¿Quieres instalar Neovim (última versión) junto con NvChad?"; then
     instalar_nvim=true
 
-    # Seleccionar versión de Neovim según Ubuntu
-    if [[ "$UBUNTU_VERSION" == "22.04" ]]; then
+    # Seleccionar versión de Neovim según sistema y GLIBC
+    if [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "22.04" ]] || \
+       [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "11" ]]; then
+        # Ubuntu 22.04 y Debian 11 (Bullseye) tienen GLIBC 2.31-2.35
         NVIM_VERSION="v0.9.5"
         NVIM_URL="https://github.com/neovim/neovim/releases/download/v0.9.5/nvim-linux64.tar.gz"
         NVIM_DIR="nvim-linux64"
-        echo -e "${YELLOW}Ubuntu 22.04 detectado. Usando Neovim 0.9.5 (compatible con GLIBC 2.35)${NC}"
+        echo -e "${YELLOW}$DISTRO_NAME detectado. Usando Neovim 0.9.5 (compatible con GLIBC 2.31-2.35)${NC}"
     else
+        # Ubuntu 24.04+, Debian 12+ (Bookworm) tienen GLIBC 2.36+
         NVIM_VERSION="v0.11.4"
         NVIM_URL="https://github.com/neovim/neovim/releases/download/v0.11.4/nvim-linux-x86_64.tar.gz"
         NVIM_DIR="nvim-linux-x86_64"
