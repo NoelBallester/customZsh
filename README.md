@@ -1,6 +1,5 @@
 # 🧠 personalizarTerminal.sh# customZsh
 
-# 🧠 personalizarTerminal.sh
 
 Script interactivo y modular para automatizar la personalización avanzada del entorno de terminal en sistemas Linux basados en Debian/Ubuntu. Instala y configura Zsh, Oh My Zsh, Powerlevel10k, Neovim con NvChad, y herramientas modernas como `lsd` y `batcat`.
 

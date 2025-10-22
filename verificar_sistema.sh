@@ -3,7 +3,7 @@
 # Script de verificación de compatibilidad para personalizarTerminal.sh
 # Detecta sistema operativo y verifica disponibilidad de paquetes
 
-set -eo pipefail
+set -euo pipefail
 
 # Colores
 RED="\033[0;31m"
@@ -87,14 +87,15 @@ echo ""
 if [[ "$MODE" == "detallado" ]]; then
     echo -e "${CYAN}═══ Disponibilidad de Paquetes ═══${NC}"
     
-    packages=("bat" "lsd" "build-essential" "zsh" "fontconfig")
-    descriptions=("bat/batcat" "lsd" "build-essential" "zsh" "fontconfig")
+    declare -a packages=("bat" "lsd" "build-essential" "zsh" "fontconfig")
+    declare -a descriptions=("bat/batcat" "lsd" "build-essential" "zsh" "fontconfig")
     
     for i in "${!packages[@]}"; do
         pkg="${packages[$i]}"
         desc="${descriptions[$i]}"
-        if apt-cache show "$pkg" &>/dev/null 2>&1; then
-            version=$(apt-cache policy "$pkg" 2>/dev/null | grep "Candidate:" | awk '{print $2}')
+        
+        if apt-cache show "$pkg" 2>/dev/null | grep -q "Package: $pkg"; then
+            version=$(apt-cache show "$pkg" 2>/dev/null | grep "^Version:" | head -n1 | awk '{print $2}')
             echo -e "${GREEN}✓${NC} $desc ${YELLOW}($version)${NC}"
         else
             echo -e "${RED}✗${NC} $desc ${YELLOW}(no en repos)${NC}"
@@ -126,7 +127,10 @@ else
 fi
 
 # Neovim y GLIBC
-glibc_version=$(ldd --version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+' || echo "desconocida")
+glibc_version=$(ldd --version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+' | head -n1)
+if [[ -z "$glibc_version" ]]; then
+    glibc_version="desconocida"
+fi
 
 if [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "22.04" ]] || \
    [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "11" ]]; then
