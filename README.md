@@ -545,6 +545,36 @@ command -v batcat
 alias | grep cat
 ```
 
+### ℹ️ fzf: activación y solución automática
+
+El instalador ahora pregunta explícitamente si quieres activar la búsqueda de historial con `fzf` (Ctrl+r). Si respondes "sí", el script intentará automáticamente:
+
+- Instalar `fzf` desde APT (si está disponible en tus repositorios).
+- Si APT no está disponible o falla, clonar `https://github.com/junegunn/fzf.git` en `~/.fzf` y ejecutar el instalador no interactivo para generar `~/.fzf.zsh` y los keybindings.
+- Añadir de forma idempotente el bloque necesario en `~/.zshrc` que exporta `FZF_DEFAULT_OPTS`, `FZF_CTRL_R_OPTS` y `source`a los keybindings (`/usr/share/doc/fzf/examples/key-bindings.zsh` o `~/.fzf.zsh`).
+
+Si algo falla, `verificar_sistema.sh` ahora incluye comprobaciones específicas de `fzf` y te dirá si falta `~/.fzf`, `~/.fzf.zsh` o los keybindings instalados desde APT.
+
+Comandos manuales de reparación (elige uno):
+
+APT (si tu sistema tiene el paquete):
+```bash
+sudo apt update
+sudo apt install -y fzf
+source /usr/share/doc/fzf/examples/key-bindings.zsh
+source ~/.zshrc
+```
+
+Instalación local (fallback):
+```bash
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+yes | ~/.fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish --zsh
+source ~/.fzf.zsh
+source ~/.zshrc
+```
+
+Si prefieres no automatizar, puedes responder "no" cuando el instalador pregunte y seguir las instrucciones manuales anteriores.
+
 ---
 
 ## 🎯 Casos de Uso Recomendados
