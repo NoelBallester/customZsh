@@ -25,36 +25,55 @@ Este script permite:
 
 ### ✅ Sistema operativo compatible
 
-- Ubuntu 24.04 LTS (recomendado y validado)
-- Ubuntu 22.04 LTS (requiere ajustes manuales)
+- **Ubuntu 24.04 LTS** (recomendado - soporte completo)
+- **Ubuntu 22.04 LTS** (compatible con adaptaciones automáticas)
 
-### 📌 Requerimiento obligatorio
+### � Adaptaciones automáticas para Ubuntu 22.04
 
-El script requiere Ubuntu 24.04 o superior para garantizar:
+El script ahora **detecta automáticamente** la versión de Ubuntu y realiza las siguientes adaptaciones:
 
-- Rutas locales (`~/.local/nvim/bin`) correctamente incluidas en `$PATH`
-- Compatibilidad con Neovim v0.11.4 y plugins modernos
-- Soporte completo para Nerd Fonts y `lsd`
-- Entorno shell con Zsh correctamente integrado
+1. **lsd**: Se instala desde Snap o GitHub en lugar de repositorios oficiales
+2. **batcat**: Detecta si el comando es `bat` o `batcat` y crea aliases apropiados
+3. **Neovim**: Usa versión 0.9.5 (compatible con GLIBC 2.35) en lugar de 0.11.4
+4. **rsync**: Verifica e instala automáticamente si falta
 
-Verifica tu versión con:
+### 📌 Requerimientos mínimos
+
+- Ubuntu 22.04 LTS o superior
+- Conexión a Internet
+- Permisos de sudo
+- Git, curl y wget (se instalan automáticamente si faltan)
+
+## 🚀 Ejecución
+```bash
+chmod +x personalizarTerminal.sh
+bash personalizarTerminal.sh
+```
+El script es interactivo y pregunta al usuario si desea instalar cada componente. Esto permite personalizar la ejecución según las necesidades del entorno.
+
+> ⚠️ **Nota importante**: El script ahora valida correctamente la sintaxis y ha sido corregido para evitar errores de ejecución.
+
+### 🧪 Verificar compatibilidad (opcional)
+
+Antes de ejecutar, puedes verificar la compatibilidad de tu sistema:
 
 ```bash
-lsb_release -a
-Si usas Ubuntu 22.04, aplica estos ajustes manuales:
+bash test_compatibilidad.sh
+```
 
-Añadir manualmente ~/.local/nvim/bin al $PATH
+Este script verifica:
+- Versión de Ubuntu
+- Disponibilidad de comandos requeridos
+- Paquetes en repositorios
+- Versión de Neovim recomendada
 
-Instalar build-essential para evitar errores de compilador C
+### 📄 Documentación adicional
 
-Ejecutar fc-cache -fv tras instalar fuentes
+- **`COMPATIBILIDAD.md`**: Análisis detallado de diferencias entre Ubuntu 24.04 y 22.04
+- **`test_compatibilidad.sh`**: Script de verificación rápida del sistema
+- **`verificar_compatibilidad.sh`**: Diagnóstico completo de compatibilidad
 
-Asegurar que .zshrc se carga correctamente (chsh -s $(which zsh))
-
-🚀 Ejecución
-bash
-bash personalizarTerminal.sh
-El script es interactivo y pregunta al usuario si desea instalar cada componente. Esto permite personalizar la ejecución según las necesidades del entorno.
+---
 
 🧠 Estructura técnica
 1. Seguridad
