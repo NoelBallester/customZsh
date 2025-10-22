@@ -140,35 +140,55 @@ chmod +x personalizarTerminal.sh
 
 ## 🧪 Verificación de Compatibilidad
 
-### 📄 Documentación adicional
-
 Antes de ejecutar el script principal, puedes verificar la compatibilidad de tu sistema:
 
-- **`COMPATIBILIDAD.md`**: Análisis detallado de diferencias entre Ubuntu 24.04 y 22.04
+```bash
+# Verificación rápida (por defecto)
+bash verificar_sistema.sh
 
-```bash- **`COMPATIBILIDAD_DEBIAN.md`**: Guía completa de compatibilidad con Debian
+# Verificación detallada con análisis completo
+bash verificar_sistema.sh detallado
+```
 
-bash test_compatibilidad.sh- **`RESUMEN_CORRECCIONES.md`**: Historial de correcciones aplicadas
+**Características:**
+- ✅ Detección automática de sistema operativo (Ubuntu/Debian)
+- 🔍 Validación de sintaxis del script principal
+- 📦 Verificación de comandos y paquetes requeridos
+- 💡 Recomendaciones específicas según tu distribución y versión
+- 🔧 Análisis de GLIBC para compatibilidad de Neovim
 
-```- **`test_compatibilidad.sh`**: Script de verificación rápida del sistema
+**Salida esperada (modo simple):**
 
-- **`verificar_compatibilidad.sh`**: Diagnóstico completo de compatibilidad
-
-**Salida esperada:**
-
-```---
-
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Verificación de Sistema - personalizarTerminal.sh
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Test de compatibilidad - personalizarTerminal.sh🧠 Estructura técnica
+✓ Sistema detectado: Ubuntu 24.04 LTS
+✓ Distribución: ubuntu
+✓ Versión: 24.04
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━1. Seguridad
+═══ Validación de Sintaxis ═══
+✓ personalizarTerminal.sh - Sintaxis correcta
 
-bash
+═══ Comandos Requeridos ═══
+✓ git
+✓ curl
+✓ wget
+✓ unzip
+✓ fc-cache
+✓ rsync
 
-✓ Sistema: Ubuntu 24.04.3 LTSset -euo pipefail
+═══ Configuración Recomendada ═══
+✓ lsd: Instalación desde repositorios APT
+✓ bat: Comando disponible como 'bat'
+✓ Neovim: Versión 0.11.4 (GLIBC 2.39)
 
-✓ Versión: 24.04Evita errores silenciosos, variables no definidas y fallos en pipes.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Sistema compatible - Listo para ejecutar
+
+Ejecutar: bash personalizarTerminal.sh
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
 
@@ -480,9 +500,9 @@ chsh -s $(which zsh)
 - [bat](https://github.com/sharkdp/bat) - cat mejorado
 - [Nerd Fonts](https://www.nerdfonts.com/) - Fuentes con iconos
 
-### Scripts de Diagnóstico
-- `test_compatibilidad.sh` - Verificación rápida del sistema
-- `verificar_compatibilidad.sh` - Diagnóstico detallado con recomendaciones
+### Script de Diagnóstico
+
+- `verificar_sistema.sh` - Verificación del sistema con modo simple/detallado
 
 ---
 
