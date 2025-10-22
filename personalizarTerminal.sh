@@ -293,6 +293,69 @@ if preguntar "¿Quieres instalar Neovim (última versión) junto con NvChad?"; t
         echo -e "${GREEN}NvChad listo. Puedes ejecutar 'nvim' ahora mismo.${NC}"
 fi
 
+    # Activar búsqueda del historial con fzf en Ctrl+r
+    if preguntar "¿Quieres activar búsqueda del historial con fzf (Ctrl+r) con vista previa?"; then
+        usar_fzf_hist=true
+
+        # Instalar fzf si no está disponible
+        if ! command -v fzf &>/dev/null; then
+            echo -e "${YELLOW}Instalando fzf...${NC}"
+            if sudo apt-get update -y && sudo apt-get install -y fzf; then
+                echo "fzf instalado desde APT" >> "$LOG"
+            else
+                echo -e "${YELLOW}APT falló o no disponible. Instalando fzf desde GitHub (local en $HOME/.fzf)...${NC}"
+                if [[ ! -d "$HOME/.fzf" ]]; then
+                    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+                fi
+                yes | "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish --zsh || true
+            fi
+        fi
+
+        # Construir comando de previsualización (con bat si está)
+        PREVIEW_CMD='print -r -- {}'
+        if command -v bat &>/dev/null; then
+            PREVIEW_CMD="echo {} | bat -l bash -p --color=always"
+        elif command -v batcat &>/dev/null; then
+            PREVIEW_CMD="echo {} | batcat -l bash -p --color=always"
+        fi
+
+        # Añadir configuración a .zshrc si no existe
+        if ! grep -q "# FZF: ctrl-r" "$ZSHRC"; then
+            {
+                echo ""
+                echo "# FZF: ctrl-r búsqueda de historial con vista previa"
+                echo "export FZF_DEFAULT_OPTS=\"--height 60% --layout=reverse --border --info=inline --marker='»' --pointer='▶' --prompt='❯ ' --color=fg:#c0caf5,bg:#1a1b26,hl:#bb9af7,fg+:#e0def4,bg+:#2a2b3a,hl+:#7dcfff,info:#7aa2f7,prompt:#7dcfff,pointer:#f7768e,marker:#e0af68,border:#3b4261\""
+                echo "export FZF_CTRL_R_OPTS=\"--preview '$PREVIEW_CMD' --preview-window=down,3,wrap --bind ctrl-/:toggle-preview --exact\""
+                echo ""
+                echo "# Keybindings de fzf"
+                echo "if [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]; then"
+                echo "  source /usr/share/doc/fzf/examples/key-bindings.zsh"
+                echo "  [ -f /usr/share/doc/fzf/examples/completion.zsh ] && source /usr/share/doc/fzf/examples/completion.zsh"
+                echo "elif [ -f \"$HOME/.fzf.zsh\" ]; then"
+                echo "  source \"$HOME/.fzf.zsh\""
+                echo "fi"
+                echo ""
+                echo "# Fallback explícito del atajo (por si no se cargan los keybindings del sistema)"
+                echo "if type fzf-history-widget >/dev/null 2>&1; then"
+                echo "  bindkey '^R' fzf-history-widget"
+                echo "fi"
+            } >> "$ZSHRC"
+            echo "FZF (Ctrl+r) configurado en $ZSHRC" >> "$LOG"
+        fi
+
+        # Mejorar el historial de Zsh (tamaño grande y opciones útiles)
+        if ! grep -q "# Historial Zsh (ampliado)" "$ZSHRC"; then
+            {
+                echo ""
+                echo "# Historial Zsh (ampliado)"
+                echo "export HISTFILE=\"$HOME/.zsh_history\""
+                echo "export HISTSIZE=200000"
+                echo "export SAVEHIST=200000"
+                echo "setopt HIST_IGNORE_DUPS SHARE_HISTORY INC_APPEND_HISTORY EXTENDED_HISTORY HIST_FIND_NO_DUPS HIST_IGNORE_SPACE"
+            } >> "$ZSHRC"
+        fi
+    fi
+
 # Añadir configuración a .zshrc sin sobrescribir
 {
   echo ""
