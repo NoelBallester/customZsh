@@ -29,6 +29,31 @@ ZSH_CUSTOM="${ZSH_CUSTOM:-$ZSH/custom}"
 ZSHRC="$HOME/.zshrc"
 LOG="$HOME/.zsh_installer.log"
 
+# Opciones de línea de comando
+# --yes, -y : responder sí a todas las preguntas (modo no interactivo)
+AUTO_YES=false
+while [[ ${1:-} != "" ]]; do
+    case "$1" in
+        --yes|-y)
+            AUTO_YES=true
+            shift
+            ;;
+        --help|-h)
+            cat <<'USAGE'
+Uso: personalizarTerminal.sh [--yes]
+
+Opciones:
+    --yes, -y    Responder 'sí' a todas las preguntas (útil para automatizar)
+    --help, -h   Mostrar esta ayuda
+USAGE
+            exit 0
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
 # Detectar versión de Ubuntu/Debian
 DISTRO_ID=""
 DISTRO_VERSION=""
@@ -61,6 +86,11 @@ UBUNTU_VERSION="$DISTRO_VERSION"
 # Función para preguntar al usuario (sí/no)
 preguntar() {
     local mensaje="$1"
+    # Si estamos en modo no interactivo, aceptar automáticamente
+    if [[ "${AUTO_YES:-false}" == "true" ]]; then
+        echo -e "${YELLOW}${mensaje} [s/N]: ${NC} s (auto)"
+        return 0
+    fi
     read -rp "$(echo -e "${YELLOW}${mensaje} [s/N]: ${NC}")" respuesta
     [[ "$respuesta" =~ ^[sS]$ ]]
 }

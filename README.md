@@ -44,6 +44,14 @@ bash personalizarTerminal.sh
 
 El script es **completamente interactivo** - te preguntará qué componentes deseas instalar.
 
+Si quieres ejecutar el instalador de forma no interactiva (respondiendo 'sí' a todas las preguntas), usa la opción:
+
+```bash
+bash personalizarTerminal.sh --yes
+# o
+bash personalizarTerminal.sh -y
+```
+
 ---
 
 ## ✅ Sistemas Compatibles
