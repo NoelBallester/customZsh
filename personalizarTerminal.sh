@@ -452,6 +452,16 @@ fi
 
 # Mensaje final
 echo -e "${GREEN}✅ Configuración completada exitosamente.${NC}"
+
+# Preguntar si se desea ejecutar el script de estilos
+ESTILOS_SCRIPT="$(dirname "$0")/estilos.sh"
+if [[ -f "$ESTILOS_SCRIPT" ]] && preguntar "¿Quieres personalizar ahora los estilos (temas, fuentes)?"; then
+    # Dar permisos de ejecución por si acaso
+    chmod +x "$ESTILOS_SCRIPT"
+    # Ejecutar el script
+    "$ESTILOS_SCRIPT"
+fi
+
 echo -e "${YELLOW}📝 Ejecuta 'chsh -s $(command -v zsh) $(whoami)' si aún no has cambiado tu shell por defecto.${NC}"
 echo -e "${YELLOW}📦 Si instalaste Neovim + NvChad, ejecuta 'nvim' para completar la configuración inicial.${NC}"
 echo -e "${GREEN}🔄 Reinicia tu terminal o ejecuta 'source ~/.zshrc' para aplicar los cambios.${NC}"

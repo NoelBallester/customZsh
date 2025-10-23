@@ -1,0 +1,32 @@
+# Powerlevel10k Theme: Dracula
+# Purple, pink, and cyan on a dark background.
+
+typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
+  os_icon
+  dir
+  vcs
+)
+typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
+  status
+  command_execution_time
+  time
+)
+
+# Basic styling
+typeset -g POWERLEVEL9K_BACKGROUND=235
+typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_VIINS_FOREGROUND=99
+typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_VIINS_FOREGROUND=197
+typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_VICMD_FOREGROUND=99
+typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_VICMD_FOREGROUND=197
+
+# Segment Colors (Dracula Palette)
+# Background: 235, Current Line: 236, Foreground: 248
+# Cyan: 81, Green: 84, Orange: 215, Pink: 200, Purple: 141, Red: 203, Yellow: 221
+typeset -g POWERLEVEL9K_OS_ICON_FOREGROUND=248
+typeset -g POWERLEVEL9K_OS_ICON_BACKGROUND=141
+typeset -g POWERLEVEL9K_DIR_FOREGROUND=81
+typeset -g POWERLEVEL9K_VCS_FOREGROUND=221
+typeset -g POWERLEVEL9K_STATUS_FOREGROUND=203
+typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND=242
+typeset -g POWERLEVEL9K_TIME_FOREGROUND=242
+typeset -g POWERLEVEL9K_PROMPT_CHAR_FOREGROUND=200

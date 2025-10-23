@@ -1,0 +1,32 @@
+# Powerlevel10k Theme: Solarized Dark
+# Muted colors on a dark blue/grey background.
+
+typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
+  os_icon
+  dir
+  vcs
+)
+typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
+  status
+  command_execution_time
+  time
+)
+
+# Basic styling
+typeset -g POWERLEVEL9K_BACKGROUND=234 # base03
+typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_VIINS_FOREGROUND=136 # yellow
+typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_VIINS_FOREGROUND=160 # red
+typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_VICMD_FOREGROUND=136
+typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_VICMD_FOREGROUND=160
+
+# Segment Colors (Solarized Palette)
+# base0: 244, base1: 245, yellow: 136, orange: 166, red: 160, magenta: 125,
+# violet: 61, blue: 33, cyan: 37, green: 64
+typeset -g POWERLEVEL9K_OS_ICON_FOREGROUND=245
+typeset -g POWERLEVEL9K_OS_ICON_BACKGROUND=33
+typeset -g POWERLEVEL9K_DIR_FOREGROUND=37
+typeset -g POWERLEVEL9K_VCS_FOREGROUND=64
+typeset -g POWERLEVEL9K_STATUS_FOREGROUND=160
+typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND=244
+typeset -g POWERLEVEL9K_TIME_FOREGROUND=244
+typeset -g POWERLEVEL9K_PROMPT_CHAR_FOREGROUND=136
