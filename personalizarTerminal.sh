@@ -152,6 +152,20 @@ if preguntar "¿Quieres instalar Powerlevel10k como tema para Zsh?"; then
         git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k"
         echo "Powerlevel10k instalado" >> "$LOG"
     fi
+    
+    # Copiar tema predeterminado si no existe .p10k.zsh
+    if [[ ! -f "$HOME/.p10k.zsh" ]]; then
+        P10K_STYLES_DIR="$(dirname "$0")/p10k-styles"
+        TEMA_PREDETERMINADO="$P10K_STYLES_DIR/clasico.p10k.zsh"
+        
+        if [[ -f "$TEMA_PREDETERMINADO" ]]; then
+            echo -e "${GREEN}Aplicando tema predeterminado de Powerlevel10k...${NC}"
+            cp "$TEMA_PREDETERMINADO" "$HOME/.p10k.zsh"
+            echo "Tema predeterminado de P10k aplicado" >> "$LOG"
+        else
+            echo -e "${YELLOW}No se encontró el tema predeterminado en $TEMA_PREDETERMINADO${NC}"
+        fi
+    fi
 fi
 
 # Instalar batcat
