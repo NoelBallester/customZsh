@@ -67,7 +67,6 @@ mostrar_menu() {
     echo -e "   ${YELLOW}2)${NC} Instalación Automática (Aceptar todo por defecto)"
     echo -e "   ${YELLOW}3)${NC} Desinstalar y limpiar el sistema"
     
-    # Si existe el script de verificación en la misma carpeta, lo añadimos al menú
     if [[ -f "./verificar_sistema.sh" ]]; then
         echo -e "   ${YELLOW}4)${NC} Verificar compatibilidad del sistema"
         echo -e "   ${YELLOW}5)${NC} Salir"
@@ -364,9 +363,7 @@ if preguntar "¿Quieres instalar Neovim (última versión) junto con NvChad?"; t
             instalar_paquete ripgrep
         fi
 
-        echo -e "${GREEN}Sincronizando plugins de NvChad (headless)...${NC}"
-        nvim --headless "+lua require('lazy').sync({ wait = true, show = false })" "+qa" || true
-        nvim --headless "+lua do local ok, b = pcall(require, 'base46'); if ok and b.load_all_highlights then b.load_all_highlights() end end" "+qa" || true
+        echo -e "${YELLOW}📝 Nota: Al ejecutar 'nvim' por primera vez, NvChad instalará sus plugins automáticamente.${NC}"
     else
         echo -e "${GREEN}La configuración de NvChad ya existe. Omitiendo clonado.${NC}"
     fi
@@ -404,7 +401,17 @@ if ! grep -q "# Configuración generada por el instalador" "$ZSHRC" 2>/dev/null;
       else
         echo "ZSH_THEME=\"robbyrussell\""
       fi
-      echo "plugins=(${plugins_activados[*]})"
+      
+      # Aseguramos que syntax-highlighting sea el último plugin en cargarse
+      plugins_finales=()
+      for p in "${plugins_activados[@]}"; do
+          [[ "$p" != "zsh-syntax-highlighting" ]] && plugins_finales+=("$p")
+      done
+      if [[ " ${plugins_activados[*]} " == *" zsh-syntax-highlighting "* ]]; then
+          plugins_finales+=("zsh-syntax-highlighting")
+      fi
+      
+      echo "plugins=(${plugins_finales[*]})"
       echo "source \$ZSH/oh-my-zsh.sh"
     } >> "$ZSHRC"
 fi

@@ -18,15 +18,22 @@ MODE="${1:-simple}"
 
 # Banner
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}   Verificación de Sistema - personalizarTerminal.sh${NC}"
+echo -e "${BLUE}   Verificación de Sistema - customZsh${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-# Detectar sistema operativo
+# =========================================================================
+# 1. DETECCIÓN DEL SISTEMA Y GESTOR DE PAQUETES
+# =========================================================================
+
+DISTRO_ID="unknown"
+DISTRO_VERSION="unknown"
+DISTRO_NAME="Desconocida"
+
 if [[ -f /etc/os-release ]]; then
     . /etc/os-release
     DISTRO_ID="$ID"
-    DISTRO_VERSION="$VERSION_ID"
+    DISTRO_VERSION="${VERSION_ID:-unknown}"
     DISTRO_NAME="$PRETTY_NAME"
     
     echo -e "${GREEN}✓ Sistema detectado:${NC} $DISTRO_NAME"
@@ -34,18 +41,37 @@ if [[ -f /etc/os-release ]]; then
     echo -e "${GREEN}✓ Versión:${NC} $DISTRO_VERSION"
 else
     echo -e "${RED}✗ No se pudo detectar la versión del sistema${NC}"
-    exit 1
 fi
 
-# Validar distribución compatible
-if [[ "$DISTRO_ID" != "ubuntu" && "$DISTRO_ID" != "debian" ]]; then
-    echo -e "${YELLOW}⚠️  Distribución: $DISTRO_ID${NC}"
-    echo -e "${YELLOW}   Este script está optimizado para Ubuntu y Debian${NC}"
+# Detectar gestor de paquetes
+PKG_MANAGER=""
+INSTALL_CMD=""
+if command -v apt-get &>/dev/null; then
+    PKG_MANAGER="apt"
+    INSTALL_CMD="sudo apt install -y"
+    echo -e "${GREEN}✓ Gestor de paquetes:${NC} APT (Debian/Ubuntu)"
+elif command -v dnf &>/dev/null; then
+    PKG_MANAGER="dnf"
+    INSTALL_CMD="sudo dnf install -y"
+    echo -e "${GREEN}✓ Gestor de paquetes:${NC} DNF (Fedora/RHEL)"
+elif command -v pacman &>/dev/null; then
+    PKG_MANAGER="pacman"
+    INSTALL_CMD="sudo pacman -S"
+    echo -e "${GREEN}✓ Gestor de paquetes:${NC} Pacman (Arch Linux)"
+else
+    PKG_MANAGER="unknown"
+    echo -e "${YELLOW}⚠️  Gestor de paquetes no reconocido. Deberás instalar dependencias manualmente.${NC}"
 fi
 
+if [[ "$PKG_MANAGER" != "apt" ]]; then
+    echo -e "${YELLOW}⚠️  Este script está optimizado para Ubuntu y Debian, pero el instalador intentará adaptarse.${NC}"
+fi
 echo ""
 
-# Verificar sintaxis del script principal
+# =========================================================================
+# 2. VALIDACIÓN DEL INSTALADOR
+# =========================================================================
+
 echo -e "${CYAN}═══ Validación de Sintaxis ═══${NC}"
 if [[ -f "personalizarTerminal.sh" ]]; then
     if bash -n personalizarTerminal.sh 2>/dev/null; then
@@ -56,12 +82,14 @@ if [[ -f "personalizarTerminal.sh" ]]; then
         exit 1
     fi
 else
-    echo -e "${YELLOW}⚠️  personalizarTerminal.sh no encontrado en directorio actual${NC}"
+    echo -e "${YELLOW}⚠️  personalizarTerminal.sh no encontrado en el directorio actual${NC}"
 fi
-
 echo ""
 
-# Verificar comandos básicos requeridos
+# =========================================================================
+# 3. VERIFICACIÓN DE DEPENDENCIAS GLOBALES
+# =========================================================================
+
 echo -e "${CYAN}═══ Comandos Requeridos ═══${NC}"
 commands=("git" "curl" "wget" "unzip" "fc-cache" "rsync")
 missing_commands=()
@@ -75,154 +103,104 @@ for cmd in "${commands[@]}"; do
     fi
 done
 
-if [[ ${#missing_commands[@]} -gt 0 ]]; then
+if [[ ${#missing_commands[@]} -gt 0 && -n "$INSTALL_CMD" ]]; then
     echo ""
     echo -e "${YELLOW}Instalar comandos faltantes:${NC}"
-    echo -e "${GREEN}sudo apt install -y ${missing_commands[*]}${NC}"
+    echo -e "${GREEN}${INSTALL_CMD} ${missing_commands[*]}${NC}"
 fi
-
 echo ""
 
-# Verificar disponibilidad de paquetes en repos
-if [[ "$MODE" == "detallado" ]]; then
-    echo -e "${CYAN}═══ Disponibilidad de Paquetes ═══${NC}"
+# =========================================================================
+# 4. DISPONIBILIDAD DE PAQUETES (Solo APT)
+# =========================================================================
+
+if [[ "$MODE" == "detallado" && "$PKG_MANAGER" == "apt" ]]; then
+    echo -e "${CYAN}═══ Disponibilidad de Paquetes en APT ═══${NC}"
     
-    declare -a packages=("bat" "lsd" "build-essential" "zsh" "fontconfig")
-    declare -a descriptions=("bat/batcat" "lsd" "build-essential" "zsh" "fontconfig")
+    declare -a packages=("bat" "lsd" "build-essential" "zsh" "fontconfig" "fzf")
+    declare -a descriptions=("bat/batcat" "lsd" "build-essential" "zsh" "fontconfig" "fzf")
     
     for i in "${!packages[@]}"; do
         pkg="${packages[$i]}"
         desc="${descriptions[$i]}"
         
-        if apt-cache show "$pkg" 2>/dev/null | grep -q "Package: $pkg"; then
+        if apt-cache show "$pkg" 2>/dev/null | grep -q "^Package: $pkg$"; then
             version=$(apt-cache show "$pkg" 2>/dev/null | grep "^Version:" | head -n1 | awk '{print $2}')
             echo -e "${GREEN}✓${NC} $desc ${YELLOW}($version)${NC}"
         else
-            echo -e "${RED}✗${NC} $desc ${YELLOW}(no en repos)${NC}"
+            echo -e "${RED}✗${NC} $desc ${YELLOW}(no en repositorios)${NC}"
         fi
     done
-    
     echo ""
 fi
 
-# Comprobaciones específicas para fzf
-echo -e "${CYAN}\u2550\u2550\u2550 Comprobaci\u00f3n específica: fzf \u2550\u2550\u2550${NC}"
+# =========================================================================
+# 5. ANÁLISIS DE FZF Y CONFIGURACIÓN LOCAL
+# =========================================================================
 
-# ¿Está el paquete fzf en los repositorios APT?
-if apt-cache show fzf 2>/dev/null | grep -q "Package: fzf"; then
-    echo -e "${GREEN}\u2713${NC} paquete 'fzf' disponible en repositorios APT"
-else
-    echo -e "${YELLOW}\u26a0${NC} paquete 'fzf' no encontrado en repositorios APT"
-fi
+echo -e "${CYAN}═══ Comprobación específica: fzf ═══${NC}"
 
-# ¿Existen los ejemplos/keybindings instalados por el paquete?
 if [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]; then
-    echo -e "${GREEN}\u2713${NC} '/usr/share/doc/fzf/examples/key-bindings.zsh' encontrado"
+    echo -e "${GREEN}✓${NC} FZF keybindings globales encontrados"
+elif [ -f "$HOME/.fzf.zsh" ] || [ -d "$HOME/.fzf" ]; then
+    echo -e "${GREEN}✓${NC} FZF configuración local encontrada en ~/.fzf"
 else
-    echo -e "${YELLOW}\u26a0${NC} '/usr/share/doc/fzf/examples/key-bindings.zsh' no encontrado"
+    echo -e "${YELLOW}⚠️${NC} FZF no parece estar instalado aún en el sistema"
 fi
 
-# ¿Existe la instalación local de fzf (~/.fzf) con su fichero .fzf.zsh?
-if [ -f "$HOME/.fzf.zsh" ]; then
-    echo -e "${GREEN}\u2713${NC} '$HOME/.fzf.zsh' encontrado (instalaci\u00f3n local de fzf)"
-elif [ -d "$HOME/.fzf" ]; then
-    echo -e "${GREEN}\u2713${NC} '$HOME/.fzf' encontrado (instalaci\u00f3n local de fzf)"
-else
-    echo -e "${YELLOW}\u26a0${NC} fzf no instalado localmente en '~/.fzf' ni se encontró '~/.fzf.zsh'"
-fi
-
-# Comprobar que el instalador 'personalizarTerminal.sh' contiene la configuraci\u00f3n para fzf (Ctrl+r)
 if [[ -f "personalizarTerminal.sh" ]]; then
-    if grep -q "# FZF: ctrl-r" personalizarTerminal.sh || grep -q "FZF_CTRL_R_OPTS" personalizarTerminal.sh; then
-        echo -e "${GREEN}\u2713${NC} 'personalizarTerminal.sh' contiene bloque de configuraci\u00f3n para fzf (Ctrl+r)"
+    if grep -q "fzf-history-widget" personalizarTerminal.sh; then
+        echo -e "${GREEN}✓${NC} 'personalizarTerminal.sh' contiene el soporte para fzf (Ctrl+r)"
     else
-        echo -e "${RED}\u2717${NC} 'personalizarTerminal.sh' NO contiene la configuraci\u00f3n para fzf (Ctrl+r)"
-        echo -e "  ${YELLOW}Recomendaci\u00f3n:${NC} Añadir el bloque de fzf al instalador para habilitar Ctrl+r con vista previa"
+        echo -e "${RED}✗${NC} 'personalizarTerminal.sh' no parece contener la configuración de fzf"
     fi
-else
-    echo -e "${YELLOW}\u26a0${NC} 'personalizarTerminal.sh' no encontrado en el directorio actual"
 fi
-
-# Probar una comprobaci\u00f3n ligera: si el documento de key-bindings existe, indicar que la carga en .zshrc funcionar\u00e1 normalmente
-if [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] || [ -f "$HOME/.fzf.zsh" ]; then
-    echo -e "${GREEN}\u2713${NC} Si el instalador carga los keybindings desde uno de estos ficheros, Ctrl+r funcionar\u00e1 correctamente tras reiniciar la sesi\u00f3n Zsh"
-else
-    echo -e "${YELLOW}\u26a0${NC} Si fzf se instala desde GitHub (\$HOME/.fzf), el instalador debe ejecutar '$HOME/.fzf/install' para generar el archivo de keybindings"
-fi
-
-# Determinar configuración recomendada según sistema
-echo -e "${CYAN}═══ Configuración Recomendada ═══${NC}"
-
-# lsd
-if [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "24.04" ]] || \
-   [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" -ge "12" ]]; then
-    echo -e "${GREEN}✓ lsd:${NC} Instalación desde repositorios APT"
-else
-    echo -e "${YELLOW}⚠ lsd:${NC} Instalación desde Snap/GitHub"
-    echo -e "  ${BLUE}→${NC} sudo snap install lsd"
-fi
-
-# bat/batcat
-if [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "24.04" ]] || \
-   [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" -ge "12" ]]; then
-    echo -e "${GREEN}✓ bat:${NC} Comando disponible como 'bat'"
-else
-    echo -e "${YELLOW}⚠ bat:${NC} Comando disponible como 'batcat'"
-    echo -e "  ${BLUE}→${NC} Alias automático creado por el script"
-fi
-
-# Neovim y GLIBC
-glibc_version=$(ldd --version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+' | head -n1)
-if [[ -z "$glibc_version" ]]; then
-    glibc_version="desconocida"
-fi
-
-if [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "22.04" ]] || \
-   [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "11" ]]; then
-    echo -e "${YELLOW}⚠ Neovim:${NC} Versión 0.9.5 (GLIBC $glibc_version)"
-    echo -e "  ${BLUE}→${NC} Compatible con sistemas GLIBC 2.31-2.35"
-else
-    echo -e "${GREEN}✓ Neovim:${NC} Versión 0.11.4 (GLIBC $glibc_version)"
-    echo -e "  ${BLUE}→${NC} Última versión disponible"
-fi
-
 echo ""
 
-# Advertencias específicas por versión
+# =========================================================================
+# 6. CONFIGURACIÓN RECOMENDADA (GLIBC Y VERSIONES)
+# =========================================================================
+
+echo -e "${CYAN}═══ Configuración Esperada ═══${NC}"
+
+# Neovim y GLIBC
+glibc_version=$(ldd --version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+' | head -n1 || echo "desconocida")
+
 if [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "22.04" ]] || \
    [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "11" ]]; then
-    echo -e "${CYAN}═══ Notas para $DISTRO_NAME ═══${NC}"
-    echo -e "${YELLOW}ℹ${NC}  Este sistema requiere adaptaciones automáticas"
-    echo -e "${YELLOW}ℹ${NC}  El script detectará y aplicará las configuraciones apropiadas"
-    echo ""
+    echo -e "${YELLOW}⚠️  Neovim:${NC} Se instalará v0.9.5 (GLIBC $glibc_version)"
+    echo -e "   ${BLUE}→${NC} Compatible con GLIBC 2.31-2.35"
     
-    if [[ "$MODE" == "detallado" ]]; then
-        echo -e "${BLUE}Adaptaciones que se aplicarán:${NC}"
-        echo -e "  1. lsd → Instalación vía Snap o descarga directa"
-        echo -e "  2. batcat → Creación de aliases para 'bat'"
-        echo -e "  3. Neovim 0.9.5 → Compatible con GLIBC $glibc_version"
-        echo -e "  4. rsync → Verificación e instalación si falta"
-        echo ""
+    if [[ "$PKG_MANAGER" == "apt" ]]; then
+        echo -e "${YELLOW}⚠️  lsd:${NC} Se intentará descargar desde GitHub (no en repositorios)"
+        echo -e "${YELLOW}⚠️  bat:${NC} Se configurarán alias para 'batcat'"
     fi
+else
+    echo -e "${GREEN}✓ Neovim:${NC} Se instalará v0.11.4 (GLIBC $glibc_version)"
+    echo -e "  ${BLUE}→${NC} Última versión compatible"
 fi
+echo ""
 
-# Resumen final
+# =========================================================================
+# RESUMEN FINAL
+# =========================================================================
+
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 if [[ ${#missing_commands[@]} -eq 0 ]]; then
     echo -e "${GREEN}✅ Sistema compatible - Listo para ejecutar${NC}"
     echo ""
-    echo -e "${CYAN}Ejecutar:${NC} bash personalizarTerminal.sh"
+    echo -e "${CYAN}Ejecuta:${NC} bash personalizarTerminal.sh"
 else
-    echo -e "${YELLOW}⚠️  Instalar comandos faltantes antes de continuar${NC}"
-    echo ""
-    echo -e "${CYAN}Comando:${NC} sudo apt install -y ${missing_commands[*]}"
+    echo -e "${YELLOW}⚠️  Se recomienda instalar los comandos faltantes antes de continuar${NC}"
+    if [[ -n "$INSTALL_CMD" ]]; then
+        echo -e "${CYAN}Ejecuta:${NC} ${INSTALL_CMD} ${missing_commands[*]}"
+    fi
 fi
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-# Mostrar ayuda
 if [[ "$MODE" == "simple" ]]; then
-    echo -e "${CYAN}Tip:${NC} Ejecuta '$0 detallado' para ver más información"
+    echo -e "${CYAN}Tip:${NC} Ejecuta '$0 detallado' para ver información de repositorios"
 fi
