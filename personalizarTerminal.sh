@@ -370,7 +370,7 @@ if preguntar "¿Quieres instalar Neovim (última versión) junto con NvChad?"; t
 fi
 
 usar_fzf_hist=false
-if preguntar "¿Quieres activar búsqueda del historial con fzf (Ctrl+r) con vista previa?"; then
+if preguntar "¿Quieres activar búsqueda del historial con fzf (Ctrl+r) con vista previa y la función fzf-lovely?"; then
     usar_fzf_hist=true
     if ! command -v fzf &>/dev/null; then
         echo -e "${YELLOW}Instalando fzf...${NC}"
@@ -483,6 +483,19 @@ if $usar_fzf_hist; then
             echo "fi"
             echo "if type fzf-history-widget >/dev/null 2>&1; then bindkey '^R' fzf-history-widget; fi"
         } >> "$ZSHRC"
+        
+        # Inyectar la función fzf-lovely de forma limpia
+        cat << 'EOF' >> "$ZSHRC"
+
+# Función fzf-lovely: buscador difuso con vista previa avanzada
+function fzf-lovely() {
+    if [ "$1" = "h" ]; then
+        fzf -m --reverse --preview-window down:20 --preview '[[ $(file --mime {}) =~ binary ]] && echo {} is a binary file || (batcat --style=numbers --color=always {} || bat --style=numbers --color=always {} || highlight -O ansi -l {} || coderay {} || rougify {} || cat {}) 2> /dev/null | head -500'
+    else
+        fzf -m --preview '[[ $(file --mime {}) =~ binary ]] && echo {} is a binary file || (batcat --style=numbers --color=always {} || bat --style=numbers --color=always {} || highlight -O ansi -l {} || coderay {} || rougify {} || cat {}) 2> /dev/null | head -500'
+    fi
+}
+EOF
     fi
 
     if ! grep -q "# Historial Zsh (ampliado)" "$ZSHRC" 2>/dev/null; then
