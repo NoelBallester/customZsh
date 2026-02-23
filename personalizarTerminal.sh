@@ -29,7 +29,10 @@ ZSH_CUSTOM="${ZSH_CUSTOM:-$ZSH/custom}"
 ZSHRC="$HOME/.zshrc"
 LOG="$HOME/.zsh_installer.log"
 
-# Función de desinstalación
+# =========================================================================
+# FUNCIONES PRINCIPALES (Desinstalar, Menú, Paquetes)
+# =========================================================================
+
 desinstalar() {
     echo -e "${RED}Iniciando desinstalación de los componentes...${NC}"
     rm -rf "$HOME/.oh-my-zsh"
@@ -37,7 +40,6 @@ desinstalar() {
     rm -rf "$HOME/.config/nvim"
     rm -rf "$HOME/.fzf"
     
-    # Intentar restaurar el backup original de zshrc
     if [[ -f "$HOME/.zshrc.pre-oh-my-zsh" ]]; then
         echo -e "${YELLOW}Restaurando ~/.zshrc original...${NC}"
         mv "$HOME/.zshrc.pre-oh-my-zsh" "$HOME/.zshrc"
@@ -45,7 +47,6 @@ desinstalar() {
         echo -e "${YELLOW}No se encontró backup de ~/.zshrc. Se mantendrá el actual.${NC}"
     fi
 
-    # Volver a bash si es posible
     if command -v bash &>/dev/null; then
         echo -e "${YELLOW}Cambiando shell por defecto a bash...${NC}"
         chsh -s "$(command -v bash)" "$(whoami)" || true
@@ -55,35 +56,74 @@ desinstalar() {
     exit 0
 }
 
-# Opciones de línea de comando
-AUTO_YES=false
-while [[ ${1:-} != "" ]]; do
-    case "$1" in
-        --yes|-y)
-            AUTO_YES=true
-            shift
+mostrar_menu() {
+    clear
+    echo -e "${BLUE}======================================================${NC}"
+    echo -e "${GREEN}        🚀 customZsh - Gestor de Instalación        ${NC}"
+    echo -e "${BLUE}======================================================${NC}"
+    echo -e " Selecciona qué deseas hacer:"
+    echo ""
+    echo -e "   ${YELLOW}1)${NC} Instalación Interactiva (Preguntar paso a paso)"
+    echo -e "   ${YELLOW}2)${NC} Instalación Automática (Aceptar todo por defecto)"
+    echo -e "   ${YELLOW}3)${NC} Desinstalar y limpiar el sistema"
+    
+    # Si existe el script de verificación en la misma carpeta, lo añadimos al menú
+    if [[ -f "./verificar_sistema.sh" ]]; then
+        echo -e "   ${YELLOW}4)${NC} Verificar compatibilidad del sistema"
+        echo -e "   ${YELLOW}5)${NC} Salir"
+        echo -e "${BLUE}======================================================${NC}"
+        echo ""
+        read -rp "👉 Elige una opción [1-5]: " opcion_menu
+    else
+        echo -e "   ${YELLOW}4)${NC} Salir"
+        echo -e "${BLUE}======================================================${NC}"
+        echo ""
+        read -rp "👉 Elige una opción [1-4]: " opcion_menu
+    fi
+
+    case $opcion_menu in
+        1)
+            AUTO_YES=false
+            echo -e "\n${GREEN}Iniciando instalación interactiva...${NC}\n"
             ;;
-        --uninstall)
+        2)
+            AUTO_YES=true
+            echo -e "\n${YELLOW}Iniciando instalación automática desatendida...${NC}\n"
+            ;;
+        3)
+            echo ""
             desinstalar
             ;;
-        --help|-h)
-            cat <<'USAGE'
-Uso: personalizarTerminal.sh [OPCIONES]
-
-Opciones:
-    --yes, -y    Responder 'sí' a todas las preguntas (modo no interactivo)
-    --uninstall  Eliminar configuraciones, Oh My Zsh, Neovim y restaurar shell
-    --help, -h   Mostrar esta ayuda
-USAGE
-            exit 0
+        4)
+            if [[ -f "./verificar_sistema.sh" ]]; then
+                echo -e "\n${BLUE}Ejecutando verificación del sistema...${NC}\n"
+                bash ./verificar_sistema.sh
+                echo ""
+                read -rp "Presiona Enter para volver al menú..."
+                mostrar_menu
+            else
+                echo -e "\n${GREEN}¡Hasta pronto!${NC}"
+                exit 0
+            fi
+            ;;
+        5)
+            if [[ -f "./verificar_sistema.sh" ]]; then
+                echo -e "\n${GREEN}¡Hasta pronto!${NC}"
+                exit 0
+            else
+                echo -e "\n${RED}❌ Opción no válida. Inténtalo de nuevo.${NC}"
+                sleep 1.5
+                mostrar_menu
+            fi
             ;;
         *)
-            break
+            echo -e "\n${RED}❌ Opción no válida. Inténtalo de nuevo.${NC}"
+            sleep 1.5
+            mostrar_menu
             ;;
     esac
-done
+}
 
-# Función universal para instalar paquetes (soporta apt, dnf, pacman)
 instalar_paquete() {
     local paquetes=("$@")
     if command -v apt-get &>/dev/null; then
@@ -97,7 +137,47 @@ instalar_paquete() {
     fi
 }
 
-# Detectar versión de Ubuntu/Debian
+# =========================================================================
+# PROCESAR ARGUMENTOS O MOSTRAR MENÚ
+# =========================================================================
+
+AUTO_YES=false
+
+if [[ $# -eq 0 ]]; then
+    mostrar_menu
+else
+    while [[ ${1:-} != "" ]]; do
+        case "$1" in
+            --yes|-y)
+                AUTO_YES=true
+                shift
+                ;;
+            --uninstall)
+                desinstalar
+                ;;
+            --help|-h)
+                cat <<'USAGE'
+Uso: personalizarTerminal.sh [OPCIONES]
+
+Opciones:
+    --yes, -y    Responder 'sí' a todas las preguntas (modo no interactivo)
+    --uninstall  Eliminar configuraciones, Oh My Zsh, Neovim y restaurar shell
+    --help, -h   Mostrar esta ayuda
+USAGE
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Opción desconocida: $1${NC}"
+                exit 1
+                ;;
+        esac
+    done
+fi
+
+# =========================================================================
+# INICIO DE LA INSTALACIÓN
+# =========================================================================
+
 DISTRO_ID=""
 DISTRO_VERSION=""
 DISTRO_NAME=""
@@ -118,7 +198,6 @@ else
     DISTRO_VERSION="unknown"
 fi
 
-# Función para preguntar al usuario (sí/no)
 preguntar() {
     local mensaje="$1"
     if [[ "${AUTO_YES:-false}" == "true" ]]; then
@@ -129,14 +208,12 @@ preguntar() {
     [[ "$respuesta" =~ ^[sS]$ ]]
 }
 
-# Instalar dependencias base seguras (incluyendo unzip, wget, file)
 echo -e "${YELLOW}Verificando dependencias base del sistema...${NC}"
 if command -v apt-get &>/dev/null; then
     sudo apt-get update -y >/dev/null 2>&1 || true
 fi
 instalar_paquete zsh git curl wget unzip file >/dev/null 2>&1 || true
 
-# Cambiar shell por defecto del usuario actual
 if preguntar "¿Quieres usar Zsh como tu shell por defecto?"; then
     ZSH_PATH="$(command -v zsh)"
     CURRENT_USER="$(whoami)"
@@ -148,20 +225,17 @@ if preguntar "¿Quieres usar Zsh como tu shell por defecto?"; then
     fi
 fi
 
-# Instalar Oh My Zsh
 if [[ ! -d "$ZSH" ]] && preguntar "¿Quieres instalar Oh My Zsh?"; then
     echo -e "${GREEN}Instalando Oh My Zsh...${NC}"
     RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     echo "Oh My Zsh instalado" >> "$LOG"
 fi
 
-# Plugins de Oh My Zsh
 declare -A plugins_git=(
     ["zsh-autosuggestions"]="https://github.com/zsh-users/zsh-autosuggestions"
     ["zsh-syntax-highlighting"]="https://github.com/zsh-users/zsh-syntax-highlighting"
     ["zsh-completions"]="https://github.com/zsh-users/zsh-completions"
 )
-
 plugins_activados=(git sudo)
 
 if preguntar "¿Quieres instalar plugins adicionales de Oh My Zsh?"; then
@@ -176,7 +250,6 @@ if preguntar "¿Quieres instalar plugins adicionales de Oh My Zsh?"; then
     done
 fi
 
-# Instalar Powerlevel10k
 usar_p10k=false
 if preguntar "¿Quieres instalar Powerlevel10k como tema para Zsh?"; then
     usar_p10k=true
@@ -187,7 +260,6 @@ if preguntar "¿Quieres instalar Powerlevel10k como tema para Zsh?"; then
     fi
 fi
 
-# Instalar batcat / bat
 usar_batcat=false
 if preguntar "¿Quieres usar bat como reemplazo moderno de cat?"; then
     usar_batcat=true
@@ -197,7 +269,6 @@ if preguntar "¿Quieres usar bat como reemplazo moderno de cat?"; then
     fi
 fi
 
-# Instalar lsd
 usar_lsd=false
 if preguntar "¿Quieres usar lsd como reemplazo de ls?"; then
     usar_lsd=true
@@ -218,7 +289,6 @@ if preguntar "¿Quieres usar lsd como reemplazo de ls?"; then
         fi
     fi
 
-    # Instalar Hack Nerd Fonts si no están
     if ! fc-list | grep -qi "Hack Nerd Font"; then
         echo -e "${GREEN}Instalando Hack Nerd Fonts para compatibilidad con íconos...${NC}"
         mkdir -p "$HOME/.local/share/fonts"
@@ -233,7 +303,6 @@ if preguntar "¿Quieres usar lsd como reemplazo de ls?"; then
     fi
 fi
 
-# Instalar Zoxide (NUEVA FEATURE)
 usar_zoxide=false
 if preguntar "¿Quieres usar Zoxide como reemplazo inteligente de cd?"; then
     usar_zoxide=true
@@ -243,11 +312,9 @@ if preguntar "¿Quieres usar Zoxide como reemplazo inteligente de cd?"; then
     fi
 fi
 
-# Instalar Neovim + NvChad
 if preguntar "¿Quieres instalar Neovim (última versión) junto con NvChad?"; then
     instalar_nvim=true
 
-    # Seleccionar versión según GLIBC
     if [[ "$DISTRO_ID" == "ubuntu" && "$DISTRO_VERSION" == "22.04" ]] || \
        [[ "$DISTRO_ID" == "debian" && "$DISTRO_VERSION" == "11" ]]; then
         NVIM_VERSION="v0.9.5"
@@ -283,7 +350,6 @@ if preguntar "¿Quieres instalar Neovim (última versión) junto con NvChad?"; t
         echo 'export PATH="$HOME/.local/nvim/bin:$PATH"' >> "$ZSHRC"
     fi
 
-    # MEJORA: Solo hacer backup si NvChad no está ya instalado
     if [[ -d "$HOME/.config/nvim" && ! -f "$HOME/.config/nvim/lua/chadrc.lua" ]]; then
         echo -e "${YELLOW}Respaldo de configuración previa de Neovim...${NC}"
         mv "$HOME/.config/nvim" "$HOME/.config/nvim.backup.$(date +%s)"
@@ -306,7 +372,6 @@ if preguntar "¿Quieres instalar Neovim (última versión) junto con NvChad?"; t
     fi
 fi
 
-# Activar búsqueda del historial con fzf en Ctrl+r
 usar_fzf_hist=false
 if preguntar "¿Quieres activar búsqueda del historial con fzf (Ctrl+r) con vista previa?"; then
     usar_fzf_hist=true
@@ -326,7 +391,7 @@ if preguntar "¿Quieres activar búsqueda del historial con fzf (Ctrl+r) con vis
 fi
 
 # =========================================================================
-# ESCRITURA IDEMPOTENTE EN .ZSHRC (Protección contra duplicados)
+# ESCRITURA IDEMPOTENTE EN .ZSHRC
 # =========================================================================
 
 if ! grep -q "# Configuración generada por el instalador" "$ZSHRC" 2>/dev/null; then
